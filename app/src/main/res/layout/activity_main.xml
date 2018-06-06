@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="数  独"
+        android:textAlignment="center"
+        android:textSize="65dp"
+        android:textColor="#FFFFFF"
+        android:padding="60dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center|center_vertical|center_horizontal">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@color/buttonColor"
+            android:paddingHorizontal="100dp"
+            android:paddingVertical="5dp"
+            android:text="容  易"
+            android:textColor="@color/textColor"
+            android:layout_margin="5dp"
+            android:textSize="17dp" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:background="@color/buttonColor"
+            android:paddingHorizontal="100dp"
+            android:paddingVertical="5dp"
+            android:text="中  等"
+            android:textColor="@color/textColor"
+            android:textSize="17dp" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:background="@color/buttonColor"
+            android:paddingHorizontal="100dp"
+            android:paddingVertical="5dp"
+            android:text="困  难"
+            android:textColor="@color/textColor"
+            android:textSize="17dp" />
+
+
+    </LinearLayout>
+
+
+</LinearLayout>
