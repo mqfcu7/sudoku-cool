@@ -4,13 +4,16 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 
 public class BoardView extends View {
     public static final int DEFAULT_BOARD_SIZE = 100;
+    private static final int NO_SELECTED_DIGIT = -1;
 
     private float mCellWidth;
     private float mCellHeight;
@@ -22,8 +25,13 @@ public class BoardView extends View {
     private Paint mSectorLinePaint;
     private Paint mCellValuePaint;
     private Paint mCellValueReadonlyPaint;
+    private Paint mSelectedValuePaint;
+    private Paint mSelectedBlankPaint;
+    private Paint mSpeardValuePaint;
 
     private Game mGame;
+    private int[] mTouchCell;
+    private int mSeletectedDigit;
 
     public BoardView(Context context) {
         this(context, null);
@@ -32,6 +40,9 @@ public class BoardView extends View {
     public BoardView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
 
+        mTouchCell = null;
+        mSeletectedDigit = NO_SELECTED_DIGIT;
+
         setFocusable(true);
         setFocusableInTouchMode(true);
 
@@ -39,11 +50,17 @@ public class BoardView extends View {
         mSectorLinePaint = new Paint();
         mCellValuePaint = new Paint();
         mCellValueReadonlyPaint = new Paint();
+        mSelectedValuePaint = new Paint();
+        mSelectedBlankPaint = new Paint();
+        mSpeardValuePaint = new Paint();
 
         mLinePaint.setColor(0xff757575);
         mSectorLinePaint.setColor(0xff9e9e9e);
         mCellValuePaint.setColor(0xfffdfdfd);
         mCellValueReadonlyPaint.setColor(0xfffdfdfd);
+        mSelectedValuePaint.setColor(0x40000000);
+        mSelectedBlankPaint.setColor(0x15ffffff);
+        mSpeardValuePaint.setColor(0x15000000);
     }
 
     private int[] calcWidthHeightForMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -111,9 +128,11 @@ public class BoardView extends View {
         mSectorLineWidth = calcSectorLineWidth(wh[0], wh[1]);
     }
 
-    private void drawBoardGrid(Canvas canvas, int width, int height) {
+    private void drawBoardGrid(Canvas canvas) {
         int paddingLeft = getPaddingLeft();
         int paddingTop = getPaddingTop();
+        int width = getWidth() - getPaddingRight();
+        int height = getHeight() - getPaddingBottom();
 
         for (int c = 0; c <= Game.N; ++ c) {
             float x = (c * mCellWidth) + paddingLeft;
@@ -163,31 +182,126 @@ public class BoardView extends View {
         }
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-
-        int width = getWidth() - getPaddingRight();
-        int height = getHeight() - getPaddingBottom();
-        Log.d("TAG", "width:" + width);
-        Log.d("TAG", "height:" + height);
+    private void drawSelectedDigit(Canvas canvas) {
+        if (mTouchCell == null || mSeletectedDigit <= 0) {
+            return;
+        }
 
         int paddingLeft = getPaddingLeft();
         int paddingTop = getPaddingTop();
 
-        for (int row = 0; row < Game.N; ++ row) {
-            for (int col = 0; col < Game.N; ++ col) {
-                int cellLeft = Math.round((col * mCellWidth) + paddingLeft);
-                int cellTop = Math.round((row * mCellHeight) + paddingTop);
-
+        int[][] matrix = mGame.getMatrix();
+        for (int r = 0; r < Game.N; ++ r) {
+            for (int c = 0; c < Game.N; ++ c) {
+                if (matrix[r][c] == mSeletectedDigit) {
+                    int left = Math.round((c * mCellWidth) + paddingLeft);
+                    int top = Math.round((r * mCellHeight) + paddingTop);
+                    canvas.drawRect(left, top, left + mCellWidth, top + mCellHeight, mSelectedValuePaint);
+                }
             }
         }
+    }
 
-        drawBoardGrid(canvas, width, height);
+    private void drawSpreadDigit(Canvas canvas) {
+        if (mTouchCell == null || mSeletectedDigit != 0) {
+            return;
+        }
+
+        int paddingLeft = getPaddingLeft();
+        int paddingTop = getPaddingTop();
+
+        int left = Math.round((mTouchCell[1] * mCellWidth) + paddingLeft);
+        int top = Math.round((mTouchCell[0] * mCellHeight) + paddingTop);
+
+        canvas.drawRect(left, top, left + mCellWidth, top + mCellHeight, mSelectedBlankPaint);
+
+        for (int c = 0; c < Game.N; ++ c) {
+            if (c == mTouchCell[1]) {
+                continue;
+            }
+            if (getDigitAtPoint(mTouchCell[0], c) == 0) {
+                continue;
+            }
+            left = Math.round((c * mCellWidth) + paddingLeft);
+            top = Math.round((mTouchCell[0] * mCellHeight) + paddingTop);
+            canvas.drawRect(left, top, left + mCellWidth, top + mCellHeight, mSpeardValuePaint);
+        }
+        for (int r = 0; r < Game.N; ++ r) {
+            if (r == mTouchCell[0]) {
+                continue;
+            }
+            if (getDigitAtPoint(r, mTouchCell[1]) == 0) {
+                continue;
+            }
+            left = Math.round((mTouchCell[1] * mCellWidth) + paddingLeft);
+            top = Math.round((r * mCellHeight) + paddingTop);
+            canvas.drawRect(left, top, left + mCellWidth, top + mCellHeight, mSpeardValuePaint);
+        }
+    }
+
+    private void drawTouchCell(Canvas canvas) {
+        if (mTouchCell == null) {
+            return;
+        }
+
+        drawSelectedDigit(canvas);
+        drawSpreadDigit(canvas);
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+
+        drawBoardGrid(canvas);
+
+        drawTouchCell(canvas);
+
         drawBoardDigit(canvas);
+
+    }
+
+    private int[] getCellAtPoint(int x, int y) {
+        x -= getPaddingLeft();
+        y -= getPaddingTop();
+
+        int r = (int) (y / mCellHeight);
+        int c = (int) (x / mCellWidth);
+
+        if (c >= 0 && c < Game.N && r >=0 && r < Game.N) {
+            return new int[]{r, c};
+        }
+        return null;
+    }
+
+    private int getDigitAtPoint(int r, int c) {
+        return mGame.getMatrix()[r][c];
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (event.getAction() != MotionEvent.ACTION_DOWN) {
+            return false;
+        }
+
+        int x = (int)event.getX();
+        int y = (int)event.getY();
+
+        int[] rc = getCellAtPoint(x, y);
+        if (mSeletectedDigit == 0 || getDigitAtPoint(rc[0], rc[1]) != mSeletectedDigit) {
+            mSeletectedDigit = getDigitAtPoint(rc[0], rc[1]);
+            mTouchCell = rc;
+        } else {
+            mSeletectedDigit = NO_SELECTED_DIGIT;
+            mTouchCell = null;
+        }
+
+        postInvalidate();
+
+        return true;
     }
 
     public void setGame(Game game) {
         mGame = game;
     }
+
 }
