@@ -5,6 +5,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.Rect;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -14,6 +16,9 @@ import android.view.View;
 public class BoardView extends View {
     public static final int DEFAULT_BOARD_SIZE = 100;
     private static final int NO_SELECTED_DIGIT = -1;
+    private static final float ASPECT_RATIO = 0.8f;
+    private static final float CONTROL_CELL_RATIO = 1.1f;
+    private static final int CONTROL_CELL_DIFF = 20;
 
     private float mCellWidth;
     private float mCellHeight;
@@ -30,8 +35,10 @@ public class BoardView extends View {
     private Paint mSpeardValuePaint;
 
     private Game mGame;
+    private int[] mBoardScale;
     private int[] mTouchCell;
     private int mSeletectedDigit;
+    private Rect[] mControlDigitRect;
 
     public BoardView(Context context) {
         this(context, null);
@@ -63,6 +70,7 @@ public class BoardView extends View {
         mSpeardValuePaint.setColor(0x15000000);
     }
 
+    @NonNull
     private int[] calcWidthHeightForMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);
@@ -84,7 +92,7 @@ public class BoardView extends View {
             width = height;
         }
         if (heightMode != MeasureSpec.EXACTLY) {
-            height = width;
+            height = Math.round(width / ASPECT_RATIO);
         }
 
         if (widthMode == MeasureSpec.AT_MOST && width > widthSize) {
@@ -117,8 +125,9 @@ public class BoardView extends View {
         int[] wh = calcWidthHeightForMeasure(widthMeasureSpec, heightMeasureSpec);
         setMeasuredDimension(wh[0], wh[1]);
 
-        mCellWidth = (wh[0] - getPaddingLeft() - getPaddingRight()) / 9.0f;
-        mCellHeight = (wh[1] - getPaddingTop() - getPaddingBottom()) / 9.0f;
+        mBoardScale = new int[]{wh[0], wh[0]};
+        mCellWidth = 1.0f * (mBoardScale[0] - getPaddingLeft() - getPaddingRight()) / Game.N;
+        mCellHeight = 1.0f * (mBoardScale[1] - getPaddingTop() - getPaddingBottom()) / Game.N;
 
         mCellValuePaint.setTextSize(mCellHeight * 0.75f);
 
@@ -131,8 +140,8 @@ public class BoardView extends View {
     private void drawBoardGrid(Canvas canvas) {
         int paddingLeft = getPaddingLeft();
         int paddingTop = getPaddingTop();
-        int width = getWidth() - getPaddingRight();
-        int height = getHeight() - getPaddingBottom();
+        int width = mBoardScale[0] - getPaddingRight();
+        int height = mBoardScale[1] - getPaddingBottom();
 
         for (int c = 0; c <= Game.N; ++ c) {
             float x = (c * mCellWidth) + paddingLeft;
@@ -239,13 +248,43 @@ public class BoardView extends View {
         }
     }
 
-    private void drawTouchCell(Canvas canvas) {
-        if (mTouchCell == null) {
-            return;
+    private void drawControlPad(Canvas canvas) {
+        int paddingLeft = getPaddingLeft();
+        int paddingTop = getPaddingTop();
+
+        int cellWidth = Math.round(mCellWidth * CONTROL_CELL_RATIO);
+        int cellHeight = Math.round(mCellHeight * CONTROL_CELL_RATIO);
+
+        float numberAscent = mCellValuePaint.ascent();
+        int digitLeft = (int)((cellWidth - mCellValuePaint.measureText("0")) / 2);
+        int digitTop = (int)((cellHeight - mCellValuePaint.getTextSize()) / 2);
+
+        mControlDigitRect = new Rect[Game.N];
+        int top = Math.round(paddingTop + (getHeight() + mBoardScale[1]) / 2 - cellHeight / 2 + CONTROL_CELL_DIFF);
+        for (int x = 0; x < Game.N; ++ x) {
+            if (x % 2 == 0) {
+                int left = Math.round((x * mCellWidth) + paddingLeft);
+                mControlDigitRect[x] = new Rect(left, top, left + cellHeight, top + cellHeight);
+                canvas.drawRect(mControlDigitRect[x], mSelectedValuePaint);
+                canvas.drawText(Integer.toString(x + 1),
+                        left + digitLeft,
+                        top + digitTop - numberAscent,
+                        mCellValuePaint);
+            }
         }
 
-        drawSelectedDigit(canvas);
-        drawSpreadDigit(canvas);
+        top = Math.round(paddingTop + (getHeight() + mBoardScale[1]) / 2 - cellHeight / 2 + 2 * CONTROL_CELL_DIFF);
+        for (int x = 0; x < Game.N; ++ x) {
+            if (x % 2 == 1) {
+                int left = Math.round((x * mCellWidth) + paddingLeft);
+                mControlDigitRect[x]= new Rect(left, top, left + cellWidth, top + cellHeight);
+                canvas.drawRect(mControlDigitRect[x], mSelectedValuePaint);
+                canvas.drawText(Integer.toString(x + 1),
+                        left + digitLeft,
+                        top + digitTop - numberAscent,
+                        mCellValuePaint);
+            }
+        }
     }
 
     @Override
@@ -254,12 +293,15 @@ public class BoardView extends View {
 
         drawBoardGrid(canvas);
 
-        drawTouchCell(canvas);
+        drawSelectedDigit(canvas);
+        drawSpreadDigit(canvas);
 
         drawBoardDigit(canvas);
 
+        drawControlPad(canvas);
     }
 
+    @Nullable
     private int[] getCellAtPoint(int x, int y) {
         x -= getPaddingLeft();
         y -= getPaddingTop();
@@ -277,6 +319,38 @@ public class BoardView extends View {
         return mGame.getMatrix()[r][c];
     }
 
+    boolean judgeTouchBoard(int x, int y) {
+        int[] rc = getCellAtPoint(x, y);
+        if (rc == null) {
+            return false;
+        }
+
+        if (mSeletectedDigit == 0 || getDigitAtPoint(rc[0], rc[1]) != mSeletectedDigit) {
+            mSeletectedDigit = getDigitAtPoint(rc[0], rc[1]);
+            mTouchCell = rc;
+        } else {
+            mSeletectedDigit = NO_SELECTED_DIGIT;
+            mTouchCell = null;
+        }
+
+        return true;
+    }
+
+    boolean judgeTouchControl(int x, int y) {
+        if (mTouchCell == null || mSeletectedDigit != 0) {
+            return false;
+        }
+        for (int i = 0; i < Game.N; ++ i) {
+            if (mControlDigitRect[i].contains(x, y)) {
+                if (mGame.setCellValue(mTouchCell[0], mTouchCell[1], i + 1)) {
+                    mSeletectedDigit = i + 1;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (event.getAction() != MotionEvent.ACTION_DOWN) {
@@ -286,16 +360,9 @@ public class BoardView extends View {
         int x = (int)event.getX();
         int y = (int)event.getY();
 
-        int[] rc = getCellAtPoint(x, y);
-        if (mSeletectedDigit == 0 || getDigitAtPoint(rc[0], rc[1]) != mSeletectedDigit) {
-            mSeletectedDigit = getDigitAtPoint(rc[0], rc[1]);
-            mTouchCell = rc;
-        } else {
-            mSeletectedDigit = NO_SELECTED_DIGIT;
-            mTouchCell = null;
+        if (judgeTouchBoard(x, y) || judgeTouchControl(x, y)) {
+            postInvalidate();
         }
-
-        postInvalidate();
 
         return true;
     }

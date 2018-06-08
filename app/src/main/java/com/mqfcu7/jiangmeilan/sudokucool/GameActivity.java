@@ -27,6 +27,7 @@ public class GameActivity extends AppCompatActivity {
 
         mGame = new Game();
         mGame.onCreate(gameData.data);
+        mGame.onSolver();
 
         mBoard = (BoardView)findViewById(R.id.sudoku_board);
         mBoard.setGame(mGame);
