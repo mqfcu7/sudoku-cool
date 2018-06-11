@@ -28,6 +28,31 @@ public class Game {
 
     public int[][] getMatrix() { return mCells; }
 
+    public int getAnswer(int x, int y) { return mAnwsers[x][y]; }
+
+    public boolean is_completed_value(int value) {
+        int cnt = 0;
+        for (int i = 0; i < N; ++ i) {
+            for (int j = 0; j < N; ++ j) {
+                if (mCells[i][j] == value) {
+                    cnt ++;
+                }
+            }
+        }
+        return cnt == N;
+    }
+
+    public boolean is_completed_all() {
+        for (int i = 0; i < N; ++ i) {
+            for (int j = 0; j < N; ++ j) {
+                if (mCells[i][j] == 0) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     public boolean setCellValue(int x, int y, int value) {
         if (mAnwsers[x][y] != value) {
             return false;
