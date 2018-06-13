@@ -1,7 +1,9 @@
 package com.mqfcu7.jiangmeilan.sudokucool;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
@@ -12,6 +14,9 @@ import android.view.KeyEvent;
 import android.widget.TextView;
 
 public class GameActivity extends AppCompatActivity {
+
+    private static final String EXTRA_GAME_LEVEL =
+            "com.mqfcu7.jiangmeilan.sudokucool.game_level";
 
     private int mId;
 
@@ -26,13 +31,20 @@ public class GameActivity extends AppCompatActivity {
     private GameTimer mGameTimer;
     private GameTimeFormat mGameTimeFormat;
 
+    public static Intent newIntent(Context packageContext, int level) {
+        Intent intent = new Intent(packageContext, GameActivity.class);
+        intent.putExtra(EXTRA_GAME_LEVEL, level);
+        return intent;
+    }
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
+        int level = getIntent().getIntExtra(EXTRA_GAME_LEVEL, 1);
         mDatabase = new GameDatabase(getApplicationContext());
-        GameDatabase.GameData gameData = mDatabase.getGameData(1);
+        GameDatabase.GameData gameData = mDatabase.getGameData(level);
 
         mId = gameData.id;
         Log.d("TAG", "mId:" + mId);

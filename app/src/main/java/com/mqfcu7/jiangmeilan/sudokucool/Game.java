@@ -11,7 +11,6 @@ public class Game {
     private int[][] mAnwsers;
 
     public void onCreate(String data) {
-        Log.d("TAG", data);
         mCells = new int[N][N];
         mAnwsers = new int[N][N];
         for (int i = 0; i < N; ++ i) {

@@ -20,9 +20,23 @@ public class MainActivity extends AppCompatActivity {
         easyButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent();
-                intent.setClass(getApplicationContext(), GameActivity.class);
-                startActivity(intent);
+                startActivity(GameActivity.newIntent(getApplicationContext(), GameDatabase.LEVEL_EASY));
+            }
+        });
+
+        Button normalButton = (Button)findViewById(R.id.normal_button);
+        normalButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(GameActivity.newIntent(getApplicationContext(), GameDatabase.LEVEL_NORMAL));
+            }
+        });
+
+        Button hardButton = (Button)findViewById(R.id.hard_button);
+        hardButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(GameActivity.newIntent(getApplicationContext(), GameDatabase.LEVEL_HARD));
             }
         });
     }

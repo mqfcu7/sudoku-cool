@@ -3,7 +3,6 @@ package com.mqfcu7.jiangmeilan.sudokucool;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -15,15 +14,10 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
-import android.view.animation.Transformation;
-import android.view.animation.TranslateAnimation;
-import android.widget.Toast;
 
 public class BoardView extends View {
     public static final int DEFAULT_BOARD_SIZE = 100;
@@ -481,7 +475,6 @@ public class BoardView extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (float)animation.getAnimatedValue();
-                Log.d("TAG", String.valueOf(value));
                 int x = mControlDigit[idx].tr.left + Math.round(value * 30);
                 mControlDigit[idx].xr = new Rect(x, mControlDigit[idx].tr.top,
                         mControlDigit[idx].tr.right, mControlDigit[idx].tr.bottom);

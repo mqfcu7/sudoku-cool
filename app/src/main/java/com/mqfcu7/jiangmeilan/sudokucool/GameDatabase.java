@@ -16,9 +16,9 @@ public class GameDatabase extends SQLiteOpenHelper {
 
     private static final int DATABASE_VERSION = 1;
 
-    private static final int LEVEL_EASY = 1;
-    private static final int LEVEL_NORMAL = 2;
-    private static final int LEVEL_HARD = 3;
+    public static final int LEVEL_EASY = 1;
+    public static final int LEVEL_NORMAL = 2;
+    public static final int LEVEL_HARD = 3;
 
     private Context mContext;
 
