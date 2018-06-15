@@ -22,6 +22,7 @@ import android.view.animation.Interpolator;
 
 public class BoardView extends View {
     public static final int DEFAULT_BOARD_SIZE = 100;
+    private static final int BOARD_PADDING = 10;
     private static final int NO_SELECTED_DIGIT = -1;
     private static final float ASPECT_RATIO = 0.8f;
     private static final float CONTROL_CELL_RATIO = 1.1f;
@@ -36,6 +37,7 @@ public class BoardView extends View {
 
     private Paint mLinePaint;
     private Paint mSectorLinePaint;
+    private Paint mBoardPaint;
     private Paint mCellValuePaint;
     private Paint mCellValueReadonlyPaint;
     private Paint mSelectedValuePaint;
@@ -78,6 +80,7 @@ public class BoardView extends View {
 
         mLinePaint = new Paint();
         mSectorLinePaint = new Paint();
+        mBoardPaint = new Paint();
         mCellValuePaint = new Paint();
         mCellValueReadonlyPaint = new Paint();
         mSelectedValuePaint = new Paint();
@@ -86,11 +89,12 @@ public class BoardView extends View {
 
         mLinePaint.setColor(0xff757575);
         mSectorLinePaint.setColor(0xffaeaeae);
+        mBoardPaint.setColor(0xff2f2f2f);
         mCellValuePaint.setColor(0xfffdfdfd);
         mCellValueReadonlyPaint.setColor(0xfffdfdfd);
-        mSelectedValuePaint.setColor(0x40000000);
-        mSelectedBlankPaint.setColor(0x15ffffff);
-        mSpeardValuePaint.setColor(0x15000000);
+        mSelectedValuePaint.setColor(0x90000000);
+        mSelectedBlankPaint.setColor(0x35ffffff);
+        mSpeardValuePaint.setColor(0x35000000);
 
         mActiveFromTime = SystemClock.uptimeMillis();
     }
@@ -135,9 +139,9 @@ public class BoardView extends View {
         float dipScale = getContext().getResources().getDisplayMetrics().density;
         float sizeInDip = sizeInPx / dipScale;
 
-        float sectorLineWidthInDip = 2.0f;
+        float sectorLineWidthInDip = 1.5f;
         if (sizeInDip > 150) {
-            sectorLineWidthInDip = 3.0f;
+            sectorLineWidthInDip = 2.0f;
         }
 
         return (int)(sectorLineWidthInDip * dipScale);
@@ -178,7 +182,7 @@ public class BoardView extends View {
         int[] wh = calcWidthHeightForMeasure(widthMeasureSpec, heightMeasureSpec);
         setMeasuredDimension(wh[0], wh[1]);
 
-        mBoardScale = new int[]{wh[0], wh[0]};
+        mBoardScale = new int[]{wh[0] - 2 * BOARD_PADDING, wh[0]};
         mCellWidth = 1.0f * (mBoardScale[0] - getPaddingLeft() - getPaddingRight()) / Game.N;
         mCellHeight = 1.0f * (mBoardScale[1] - getPaddingTop() - getPaddingBottom()) / Game.N;
 
@@ -193,10 +197,12 @@ public class BoardView extends View {
     }
 
     private void drawBoardGrid(Canvas canvas) {
-        int paddingLeft = getPaddingLeft();
+        int paddingLeft = getPaddingLeft() + BOARD_PADDING;
         int paddingTop = getPaddingTop();
-        int width = mBoardScale[0] - getPaddingRight();
-        int height = mBoardScale[1] - getPaddingBottom();
+        int width = mBoardScale[0] + paddingLeft;
+        int height = mBoardScale[1] + paddingTop;
+
+        canvas.drawRect(paddingLeft, paddingTop, width, height, mBoardPaint);
 
         for (int c = 0; c <= Game.N; ++ c) {
             float x = (c * mCellWidth) + paddingLeft;
@@ -217,13 +223,13 @@ public class BoardView extends View {
         }
         for (int r = 0; r <= Game.N;  r += 3) {
             float y = r * mCellHeight + paddingTop;
-            canvas.drawRect(paddingLeft, y - sectorLineWidth1, width,
+            canvas.drawRect(paddingLeft - sectorLineWidth1, y - sectorLineWidth1, width,
                     y + sectorLineWidth2, mSectorLinePaint);
         }
     }
 
     private void drawBoardDigit(Canvas canvas) {
-        int paddingLeft = getPaddingLeft();
+        int paddingLeft = getPaddingLeft() + BOARD_PADDING;
         int paddingTop = getPaddingTop();
 
         float numberAscent = mCellValuePaint.ascent();
@@ -255,7 +261,8 @@ public class BoardView extends View {
         for (int r = 0; r < Game.N; ++ r) {
             for (int c = 0; c < Game.N; ++ c) {
                 if (matrix[r][c] == mSeletectedDigit) {
-                    canvas.drawRect(getRectangleAtCell(r, c), mSelectedValuePaint);
+                    Rect rect = getRectangleAtCell(r, c);
+                    canvas.drawRect(rect.left + 2, rect.top + 2, rect.right - 2, rect.bottom - 2, mSelectedValuePaint);
                 }
             }
         }
@@ -326,7 +333,7 @@ public class BoardView extends View {
 
     @Nullable
     private int[] getCellAtPoint(int x, int y) {
-        x -= getPaddingLeft();
+        x -= getPaddingLeft() + BOARD_PADDING;
         y -= getPaddingTop();
 
         int r = (int) (y / mCellHeight);
@@ -343,7 +350,7 @@ public class BoardView extends View {
     }
 
     private Rect getRectangleAtCell(int r, int c) {
-        int left = Math.round((c * mCellWidth) + getPaddingLeft());
+        int left = Math.round((c * mCellWidth) + getPaddingLeft() + BOARD_PADDING);
         int top = Math.round((r * mCellHeight) + getPaddingTop());
         return new Rect(left, top,
                 Math.round(left + mCellWidth), Math.round(top + mCellHeight));
