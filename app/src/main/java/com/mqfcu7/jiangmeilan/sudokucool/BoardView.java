@@ -14,6 +14,7 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.MotionEvent;
 import android.view.View;
@@ -84,7 +85,7 @@ public class BoardView extends View {
         mSpeardValuePaint = new Paint();
 
         mLinePaint.setColor(0xff757575);
-        mSectorLinePaint.setColor(0xff9e9e9e);
+        mSectorLinePaint.setColor(0xffaeaeae);
         mCellValuePaint.setColor(0xfffdfdfd);
         mCellValueReadonlyPaint.setColor(0xfffdfdfd);
         mSelectedValuePaint.setColor(0x40000000);
@@ -403,10 +404,12 @@ public class BoardView extends View {
     private void onControlPadMovAnimation() {
         ValueAnimator animator = ValueAnimator.ofFloat(0.0f, 1.0f);
         animator.setDuration(300);
+        Log.d("TAG", "duration: " + animator.getDuration());
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (float)animation.getAnimatedValue();
+                Log.d("TAG", "value: " + value);
                 for (int i = 0; i < Game.N; ++ i) {
                     if (mControlDigit[i].xr == null) {
                         continue;
@@ -514,6 +517,7 @@ public class BoardView extends View {
                 mActivity.finish();
             }
         });
+        builder.setCancelable(false);
         builder.create().show();
     }
 

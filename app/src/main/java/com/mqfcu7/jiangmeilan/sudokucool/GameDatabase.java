@@ -7,7 +7,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.provider.BaseColumns;
-import android.util.Log;
 
 public class GameDatabase extends SQLiteOpenHelper {
 
@@ -180,7 +179,6 @@ public class GameDatabase extends SQLiteOpenHelper {
             if (c.moveToFirst()) {
                 result.id = c.getInt(c.getColumnIndex(MatrixColumns._ID));
                 result.data = c.getString(c.getColumnIndex(MatrixColumns.DATA));
-                Log.d("TAG", result.data);
             }
         } finally {
             if (c != null) {
