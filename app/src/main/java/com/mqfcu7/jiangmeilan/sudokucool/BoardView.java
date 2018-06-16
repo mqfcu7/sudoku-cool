@@ -262,7 +262,11 @@ public class BoardView extends View {
             for (int c = 0; c < Game.N; ++ c) {
                 if (matrix[r][c] == mSeletectedDigit) {
                     Rect rect = getRectangleAtCell(r, c);
-                    canvas.drawRect(rect.left + 2, rect.top + 2, rect.right - 2, rect.bottom - 2, mSelectedValuePaint);
+                    canvas.drawRect(rect.left + 2,
+                            rect.top + 2,
+                            rect.right - 2,
+                            rect.bottom - 2,
+                            mSelectedValuePaint);
                 }
             }
         }

@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -39,5 +40,12 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(GameActivity.newIntent(getApplicationContext(), GameDatabase.LEVEL_HARD));
             }
         });
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        MainAnimationView view = (MainAnimationView) findViewById(R.id.main_animation_view);
+        view.onReset();
     }
 }

@@ -8,26 +8,25 @@ public class Game {
     public static final int N = 9;
 
     private int[][] mCells;
-    private int[][] mAnwsers;
+    private int[][] mAnswers;
 
     public void onCreate(String data) {
         mCells = new int[N][N];
-        mAnwsers = new int[N][N];
+        mAnswers = new int[N][N];
         for (int i = 0; i < N; ++ i) {
             for (int j = 0; j < N; ++ j) {
                 mCells[i][j] = data.charAt(i * N + j) - '0';
-                mAnwsers[i][j] = mCells[i][j];
+                mAnswers[i][j] = mCells[i][j];
             }
         }
     }
 
-    public void onSolver() {
-        int placedNumbers = Solver.solveBoard(mAnwsers);
-    }
+    public void onSolver() { Solver.solveBoard(mAnswers); }
 
     public int[][] getMatrix() { return mCells; }
+    public int[][] getAnswers() { return mAnswers; }
 
-    public int getAnswer(int x, int y) { return mAnwsers[x][y]; }
+    public int getAnswer(int r, int c) { return mAnswers[r][c]; }
 
     public boolean is_completed_value(int value) {
         int cnt = 0;
@@ -52,11 +51,11 @@ public class Game {
         return true;
     }
 
-    public boolean setCellValue(int x, int y, int value) {
-        if (mAnwsers[x][y] != value) {
+    public boolean setCellValue(int r, int c, int value) {
+        if (mAnswers[r][c] != value) {
             return false;
         }
-        mCells[x][y] = value;
+        mCells[r][c] = value;
         return true;
     }
 }
