@@ -1,9 +1,5 @@
 package com.mqfcu7.jiangmeilan.sudokucool;
 
-import android.util.Log;
-
-import java.util.Arrays;
-
 public class Game {
     public static final int N = 9;
 

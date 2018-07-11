@@ -54,9 +54,12 @@ public class GameActivity extends AppCompatActivity {
         mGame.onSolver();
 
         mBoard = (BoardView)findViewById(R.id.sudoku_board);
-        mBoard.setGame(mGame);
+        mBoard.setGame(mId, mGame);
         mBoard.setGameDatabase(mDatabase);
         mBoard.setActivity(this);
+        mBoard.setTime(gameData.time);
+        mBoard.setScore(gameData.score);
+        setScore(gameData.score);
 
         mTimerLable = (TextView) findViewById(R.id.time_label);
         mHealthPointLabel = (TextView) findViewById(R.id.health_point_label);
@@ -65,6 +68,20 @@ public class GameActivity extends AppCompatActivity {
         mGameTimeFormat = new GameTimeFormat();
 
         mGameTimer.start();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        mBoard.onPause();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        mBoard.onStart();
     }
 
     @Override
@@ -97,7 +114,7 @@ public class GameActivity extends AppCompatActivity {
 
     private final class GameTimer extends Timer{
         public GameTimer() {
-            super(1000);
+            super(500);
         }
 
         @Override
@@ -110,6 +127,11 @@ public class GameActivity extends AppCompatActivity {
 
     public int getId() {
         return mId;
+    }
+
+    public void setScore(int score) {
+        TextView scoreView = (TextView)findViewById(R.id.score_label);
+        scoreView.setText("得分：" + score);
     }
 }
 

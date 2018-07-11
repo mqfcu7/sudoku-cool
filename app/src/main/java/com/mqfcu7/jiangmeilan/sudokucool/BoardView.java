@@ -14,11 +14,13 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Interpolator;
+
+import java.util.LinkedList;
+import java.util.List;
 
 public class BoardView extends View {
     public static final int DEFAULT_BOARD_SIZE = 100;
@@ -44,6 +46,7 @@ public class BoardView extends View {
     private Paint mSelectedBlankPaint;
     private Paint mSpeardValuePaint;
 
+    private int mId;
     private Game mGame;
     private GameDatabase mGameDatabase;
     private GameActivity mActivity;
@@ -51,7 +54,8 @@ public class BoardView extends View {
     private int[] mTouchCell;
     private int mSeletectedDigit;
     private int mFailureRetryCnt;
-    private long mTime;
+    private int mTime = 0;
+    private int mScore = 0;
     private long mActiveFromTime = -1;
 
     private class ControlDigit {
@@ -307,6 +311,13 @@ public class BoardView extends View {
         int digitLeft = (int)((cellWidth - mCellValuePaint.measureText("0")) / 2);
         int digitTop = (int)((cellHeight - mCellValuePaint.getTextSize()) / 2);
 
+
+        for (int i = 0; i < Game.N; ++ i) {
+            if (mControlDigit[i].r != null && mGame.is_completed_value(mControlDigit[i].v)) {
+                mControlDigit[i].r = null;
+            }
+        }
+
         for (int i = 0; i < Game.N; ++ i) {
             Rect r = mControlDigit[i].xr == null ? mControlDigit[i].r : mControlDigit[i].xr;
             if (r == null) {
@@ -332,7 +343,6 @@ public class BoardView extends View {
         drawBoardDigit(canvas);
 
         drawControlPad(canvas);
-
     }
 
     @Nullable
@@ -381,8 +391,14 @@ public class BoardView extends View {
         if (mTouchCell == null || mSeletectedDigit != 0) {
             return false;
         }
+
         for (int i = 0; i < Game.N; ++ i) {
-            if (mControlDigit[i].r != null && mControlDigit[i].r.contains(x, y)) {
+            if (mControlDigit[i].tr != null && mControlDigit[i].tr.equals(getRectangleAtCell(mTouchCell[0], mTouchCell[1]))) {
+                return false;
+            }
+        }
+        for (int i = 0; i < Game.N; ++ i) {
+            if (mControlDigit[i].r != null && mControlDigit[i].r.contains(x, y) && mControlDigit[i].xr == null) {
                 mControlDigit[i].tv = mGame.getAnswer(mTouchCell[0], mTouchCell[1]);
                 mControlDigit[i].tp = new Point(mTouchCell[0], mTouchCell[1]);
                 mControlDigit[i].xr = new Rect(mControlDigit[i].r);
@@ -415,12 +431,10 @@ public class BoardView extends View {
     private void onControlPadMovAnimation() {
         ValueAnimator animator = ValueAnimator.ofFloat(0.0f, 1.0f);
         animator.setDuration(300);
-        Log.d("TAG", "duration: " + animator.getDuration());
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (float)animation.getAnimatedValue();
-                Log.d("TAG", "value: " + value);
                 for (int i = 0; i < Game.N; ++ i) {
                     if (mControlDigit[i].xr == null) {
                         continue;
@@ -453,7 +467,10 @@ public class BoardView extends View {
                         if (mGame.is_completed_value(mControlDigit[i].v)) {
                             mControlDigit[i].r = null;
                         }
+                        mScore += Math.max(6000 - getTime() / 100, 100);
+                        mGameDatabase.recordGame(mId, mGame.getMatrix(), getTime(), mScore);
                         mSeletectedDigit = mControlDigit[i].v;
+                        mActivity.setScore(mScore);
                         if (mGame.is_completed_all()) {
                             onGameFinished();
                         }
@@ -468,7 +485,8 @@ public class BoardView extends View {
     }
 
     private void onGameFinished() {
-        mGameDatabase.setGamePass(mActivity.getId());
+        mGameDatabase.clearRecord();
+        mGameDatabase.setGamePass(mActivity.getId(), mTime, mScore);
         AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(getContext(), R.style.myDialog));
         builder.setMessage("超级厉害，成功通关!");
         builder.setTitle("游戏结束");
@@ -483,6 +501,7 @@ public class BoardView extends View {
     }
 
     private void onGameFailure(final int idx) {
+        mGameDatabase.clearRecord();
         ValueAnimator animator = ValueAnimator.ofFloat(0.0f, 1.0f);
         animator.setDuration(300);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -532,7 +551,8 @@ public class BoardView extends View {
         builder.create().show();
     }
 
-    public void setGame(Game game) {
+    public void setGame(int id, Game game) {
+        mId = id;
         mGame = game;
     }
 
@@ -544,8 +564,31 @@ public class BoardView extends View {
         mActivity = activity;
     }
 
-    public long getTime() {
-        return mTime + SystemClock.uptimeMillis() - mActiveFromTime;
+    public int getTime() {
+        if (mActiveFromTime == -1) {
+            return mTime;
+        }
+        return mTime + (int)(SystemClock.uptimeMillis() - mActiveFromTime);
     }
 
+    public void setTime(int time) {
+        mTime = time;
+    }
+
+    public int getScore() {
+        return mScore;
+    }
+
+    public void setScore(int score) {
+        mScore = score;
+    }
+
+    public void onPause() {
+        mTime = getTime();
+        mActiveFromTime = -1;
+    }
+
+    public void onStart() {
+        mActiveFromTime = SystemClock.uptimeMillis();
+    }
 }

@@ -15,11 +15,19 @@
         android:paddingTop="60dp"
         />
 
+    <TextView
+        android:id="@+id/score_text_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="10dp"
+        android:gravity="center"
+        android:textColor="#FFFFFF"/>
+
     <com.mqfcu7.jiangmeilan.sudokucool.MainAnimationView
         android:id="@+id/main_animation_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingVertical="50dp"
+        android:paddingVertical="40dp"
         />
 
     <LinearLayout

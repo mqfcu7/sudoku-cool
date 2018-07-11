@@ -7,11 +7,13 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.provider.BaseColumns;
+import android.util.Log;
 
 public class GameDatabase extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "sudoku-cool";
     private static final String TABLE_MATRIX_NAME = "matrix";
+    private static final String TABLE_RECORD_NAME = "record";
 
     private static final int DATABASE_VERSION = 1;
 
@@ -24,12 +26,23 @@ public class GameDatabase extends SQLiteOpenHelper {
     public class GameData {
         public int id;
         public String data;
+        public int time;
+        public int score;
     }
 
     private abstract class MatrixColumns implements BaseColumns {
         public static final String LEVEL = "level";
         public static final String DATA = "data";
         public static final String PASS = "pass";
+        public static final String TIME = "time";
+        public static final String SCORE = "score";
+    }
+
+    private abstract class RecordColumns implements BaseColumns {
+        public static final String MATRIX_ID = "matrix_id";
+        public static final String DATA = "data";
+        public static final String TIME = "time";
+        public static final String SCORE = "score";
     }
 
     public GameDatabase(Context context) {
@@ -39,7 +52,7 @@ public class GameDatabase extends SQLiteOpenHelper {
 
     private void insertMatrix(SQLiteDatabase db, int id, int level, String data) {
         final String sql = "insert into " + TABLE_MATRIX_NAME + " values ("
-                + id + ", " + level + ", '" + data + "', 0);";
+                + id + ", " + level + ", '" + data + "', 0, 0, 0);";
         db.execSQL(sql);
     }
 
@@ -48,7 +61,9 @@ public class GameDatabase extends SQLiteOpenHelper {
                 + MatrixColumns._ID + " integer primary key,"
                 + MatrixColumns.LEVEL + " integer,"
                 + MatrixColumns.DATA + " text,"
-                + MatrixColumns.PASS + " integer"
+                + MatrixColumns.PASS + " integer,"
+                + MatrixColumns.TIME + " integer,"
+                + MatrixColumns.SCORE + " integer"
                 + ");");
 
         // easy level
@@ -149,7 +164,13 @@ public class GameDatabase extends SQLiteOpenHelper {
     }
 
     private void createRecordData(SQLiteDatabase db) {
-
+        db.execSQL("create table " + TABLE_RECORD_NAME + " ("
+                + RecordColumns._ID + " integer primary key,"
+                + RecordColumns.MATRIX_ID + " integer,"
+                + RecordColumns.DATA + " text,"
+                + RecordColumns.TIME + " integer,"
+                + RecordColumns.SCORE + " integer"
+                + ");");
     }
 
     @Override
@@ -163,10 +184,36 @@ public class GameDatabase extends SQLiteOpenHelper {
 
     }
 
-    public GameData getGameData(int level) {
-        // TODO: get data from record
+    public GameData getRecordData() {
+        GameData result = null;
 
-        GameData result = new GameData();
+        SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+        qb.setTables(TABLE_RECORD_NAME);
+
+        Cursor c = null;
+        try {
+            SQLiteDatabase db = getReadableDatabase();
+            c = qb.query(db, null, null, null, null, null, null);
+            if (c.moveToFirst()) {
+                result = new GameData();
+                result.id = c.getInt(c.getColumnIndex(RecordColumns.MATRIX_ID));
+                result.data = c.getString(c.getColumnIndex(RecordColumns.DATA));
+                result.time = c.getInt(c.getColumnIndex(RecordColumns.TIME));
+                result.score = c.getInt(c.getColumnIndex(RecordColumns.SCORE));
+            }
+        } finally {
+            if (c != null) {
+                c.close();
+            }
+        }
+        return result;
+    }
+
+    public GameData getGameData(int level) {
+        GameData result = getRecordData();
+        if (result != null) {
+            return result;
+        }
 
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
         qb.setTables(TABLE_MATRIX_NAME);
@@ -177,6 +224,7 @@ public class GameDatabase extends SQLiteOpenHelper {
             SQLiteDatabase db = getReadableDatabase();
             c = qb.query(db, null, null, null, null, null, null);
             if (c.moveToFirst()) {
+                result = new GameData();
                 result.id = c.getInt(c.getColumnIndex(MatrixColumns._ID));
                 result.data = c.getString(c.getColumnIndex(MatrixColumns.DATA));
             }
@@ -185,17 +233,79 @@ public class GameDatabase extends SQLiteOpenHelper {
                 c.close();
             }
         }
-
         return result;
     }
 
-    public void setGamePass(int id) {
+    public void setGamePass(int id, int time, int score) {
         ContentValues values = new ContentValues();
         values.put(MatrixColumns.PASS, 1);
+        values.put(MatrixColumns.TIME, time);
+        values.put(MatrixColumns.SCORE, score);
 
         SQLiteDatabase db = getWritableDatabase();
         db.update(TABLE_MATRIX_NAME, values, MatrixColumns._ID + "=" + id, null);
     }
 
+    public int getTotalScore() {
+        int score = 0;
 
+        SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+        qb.setTables(TABLE_MATRIX_NAME);
+        qb.appendWhere(MatrixColumns.PASS + "=1");
+
+        Cursor c = null;
+        try {
+            SQLiteDatabase db = getReadableDatabase();
+            c = qb.query(db, null, null, null, null, null, null);
+            if (c.moveToFirst()) {
+                do {
+                    score += c.getInt(c.getColumnIndex(MatrixColumns.SCORE));
+                } while (c.moveToNext());
+            }
+        } finally {
+            if (c != null) {
+                c.close();
+            }
+        }
+
+        return score;
+    }
+
+    public void clearRecord() {
+        try {
+            SQLiteDatabase db = getWritableDatabase();
+            db.execSQL("delete from " + TABLE_RECORD_NAME + ";");
+        } finally {
+
+        }
+    }
+
+    public void recordGame(int id, int[][] matrix, int time, int score) {
+        String data = "";
+        for (int i = 0; i < Game.N; ++ i) {
+            for (int j = 0; j < Game.N; ++ j) {
+                data += String.valueOf(matrix[i][j]);
+            }
+        }
+
+        boolean hasRecord = getRecordData() != null;
+        ContentValues values = new ContentValues();
+        values.put(RecordColumns.MATRIX_ID, id);
+        values.put(RecordColumns.DATA, data);
+        values.put(RecordColumns.TIME, time);
+        values.put(RecordColumns.SCORE, score);
+        Log.d("TAG", values.toString());
+
+        try {
+            SQLiteDatabase db = getWritableDatabase();
+            if (hasRecord) {
+                db.update(TABLE_RECORD_NAME, values,RecordColumns._ID + "=0", null);
+            } else {
+                db.execSQL("insert into " + TABLE_RECORD_NAME + " values (0, " + id + ", '" + data + "', "
+                        + time + ", " + score + ");");
+            }
+        } finally {
+
+        }
+    }
 }
