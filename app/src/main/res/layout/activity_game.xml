@@ -1,58 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        >
-        <TextView
-           android:id="@+id/score_label"
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content"
-           android:text="积分：0"
-           android:textColor="@color/textColor"
-           android:padding="20dp"
-           android:gravity="right"
-           android:layout_gravity="left"
-           />
-        <TextView
-            android:id="@+id/time_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/textColor"
-            android:text="时间：2分31秒"
-            android:textSize="17dp"
-            android:layout_gravity="center_horizontal"
-            android:padding="20dp"/>
-       <TextView
-           android:id="@+id/health_point_label"
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content"
-           android:text="生命：3"
-           android:textColor="@color/textColor"
-           android:padding="20dp"
-           android:gravity="right"
-           android:layout_gravity="right"
-           />
-
-    </FrameLayout>
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <com.mqfcu7.jiangmeilan.sudokucool.BoardView
-            android:id="@+id/sudoku_board"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:keepScreenOn="true" />
+            >
+            <TextView
+               android:id="@+id/score_label"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:text="积分：0"
+               android:textColor="@color/textColor"
+               android:padding="20dp"
+               android:gravity="right"
+               android:layout_gravity="left"
+               />
+            <TextView
+                android:id="@+id/time_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/textColor"
+                android:text="时间：2分31秒"
+                android:textSize="17dp"
+                android:layout_gravity="center_horizontal"
+                android:padding="20dp"/>
+           <TextView
+               android:id="@+id/health_point_label"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:text="生命：3"
+               android:textColor="@color/textColor"
+               android:padding="20dp"
+               android:gravity="right"
+               android:layout_gravity="right"
+               />
 
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <com.mqfcu7.jiangmeilan.sudokucool.BoardView
+                android:id="@+id/sudoku_board"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:keepScreenOn="true" />
+
+        </LinearLayout>
     </LinearLayout>
 
-</LinearLayout>
+    <LinearLayout
+        android:id="@+id/layout_adview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:minHeight="50dp"
+        android:orientation="vertical"></LinearLayout>
+
+</RelativeLayout>

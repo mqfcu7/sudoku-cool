@@ -11,7 +11,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.KeyEvent;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.iflytek.voiceads.AdError;
+import com.iflytek.voiceads.IFLYAdListener;
+import com.iflytek.voiceads.IFLYAdSize;
+import com.iflytek.voiceads.IFLYBannerAd;
 
 public class GameActivity extends AppCompatActivity {
 
@@ -30,6 +36,9 @@ public class GameActivity extends AppCompatActivity {
 
     private GameTimer mGameTimer;
     private GameTimeFormat mGameTimeFormat;
+
+    private LinearLayout layout_ads;
+    private IFLYBannerAd bannerView;
 
     public static Intent newIntent(Context packageContext, int level) {
         Intent intent = new Intent(packageContext, GameActivity.class);
@@ -68,6 +77,8 @@ public class GameActivity extends AppCompatActivity {
         mGameTimeFormat = new GameTimeFormat();
 
         mGameTimer.start();
+
+        createBannerAd();
     }
 
     @Override
@@ -132,6 +143,53 @@ public class GameActivity extends AppCompatActivity {
     public void setScore(int score) {
         TextView scoreView = (TextView)findViewById(R.id.score_label);
         scoreView.setText("得分：" + score);
+    }
+
+    public void createBannerAd() {
+        String adUnitId = "1D79BA911B85C5E692A1B1B37D17A4C4";
+
+        bannerView = IFLYBannerAd.createBannerAd(this, adUnitId);
+        bannerView.setAdSize(IFLYAdSize.BANNER);
+
+        bannerView.loadAd(mAdListener);
+
+        layout_ads = (LinearLayout) findViewById(R.id.layout_adview);
+        layout_ads.removeAllViews();
+        layout_ads.addView(bannerView);
+    }
+
+    IFLYAdListener mAdListener = new IFLYAdListener() {
+        @Override
+        public void onAdReceive() {
+            bannerView.showAd();
+            Log.d("TAG", "onAdReceive");
+        }
+
+        @Override
+        public void onAdFailed(AdError adError) {
+            Log.d("TAG", adError.getErrorCode() + ": " + adError.getErrorDescription());
+        }
+
+        @Override
+        public void onAdClick() {
+
+        }
+
+        @Override
+        public void onAdClose() {
+
+        }
+
+        @Override
+        public void onAdExposure() {
+
+        }
+    };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        bannerView.destroy();
     }
 }
 
